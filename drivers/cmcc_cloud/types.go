@@ -139,7 +139,7 @@ type ContentInfo struct {
 ContentID       string `json:"contentID"`
 ContentName     string `json:"contentName"`
 ContentType     string `json:"contentType"`  // 代理返回字符串
-ContentSize     int64  `json:"contentSize"`  // 这个可能仍是数字
+ContentSize     string `json:"contentSize"`  // 这个可能仍是数字
 ParentCatalogID string `json:"parentCatalogId"`
 CreateTime      string `json:"createTime"`
 UpdateTime      string `json:"updateTime"`
