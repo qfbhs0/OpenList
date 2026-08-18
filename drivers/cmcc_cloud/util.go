@@ -13,7 +13,7 @@ import (
 	"github.com/OpenListTeam/OpenList/v4/drivers/base"
 	"github.com/OpenListTeam/OpenList/v4/internal/model"
 	"github.com/OpenListTeam/OpenList/v4/internal/op"
-	"github.com/OpenListTeam/OpenList/v4/pkg/utils"
+	"github.com/OpenListTeam/OpenList/v4/pkg/utils/random"
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 )
@@ -96,18 +96,18 @@ func (d *CmccCloud) setTempStatus(status string) {
 func generateUUID(appId string) string {
 	now := time.Now()
 	ts := now.Format("20060102150405") + fmt.Sprintf("%03d", now.Nanosecond()/1000000)
-	rand3 := fmt.Sprintf("%03d", utils.Rand.Intn(1000))
+	rand3 := fmt.Sprintf("%03d", random.Rand.Intn(1000))
 	raw := appId + "_" + ts + rand3
 	return base64.StdEncoding.EncodeToString([]byte(raw))
 }
 
 // generateDeviceId 生成设备ID (UUID v4 格式)
 func generateDeviceId() string {
-	return utils.RandomString(8) + "-" +
-		utils.RandomString(4) + "-" +
-		utils.RandomString(4) + "-" +
-		utils.RandomString(4) + "-" +
-		utils.RandomString(12)
+	return random.String(8) + "-" +
+		random.String(4) + "-" +
+		random.String(4) + "-" +
+		random.String(4) + "-" +
+		random.String(12)
 }
 
 // ==================== OAuth 授权 URL 生成 ====================
