@@ -209,7 +209,7 @@ func contentToObj(c ContentInfo) model.Obj {
 return &model.Object{
 ID:       c.ContentID,
 Name:     c.ContentName,
-Size:     c.ContentSize,
+Size:     parseSize(c.ContentSize),
 IsFolder: false,
 Modified: parseTime(c.UpdateTime),
 Ctime:    parseTime(c.CreateTime),
@@ -269,4 +269,16 @@ return
 // isAPIError 判断 API 响应是否为错误
 func isAPIError(resultCode string) bool {
 return resultCode != "" && resultCode != "0" && !strings.HasPrefix(resultCode, "0")
+}
+
+// parseSize 解析文件大小（代理可能返回字符串或数字）
+func parseSize(s string) int64 {
+if s == "" {
+return 0
+}
+n, err := strconv.ParseInt(s, 10, 64)
+if err == nil {
+return n
+}
+return 0
 }
