@@ -4,214 +4,247 @@ import "time"
 
 // ==================== 通用响应 ====================
 
-// APIResp 通用 API 响应
+// APIResp 通用 API 响应（代理返回的 code/message 格式）
 type APIResp struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+Code    int    `json:"code"`
+Message string `json:"message"`
 }
 
-// APIError API 错误响应
+// APIError API 错误响应（代理返回的 resultCode/desc 格式）
 type APIError struct {
-	ResultCode string `json:"resultCode"`
-	Message    string `json:"message"`
+ResultCode string `json:"resultCode"`
+Message    string `json:"desc"` // 代理用 "desc" 而非 "message"
 }
 
 // ==================== OAuth 相关 ====================
 
 // AccessToken1Req 用 UUID 换取 accesstoken 请求
 type AccessToken1Req struct {
-	UUID string `json:"uuid"`
+UUID string `json:"uuid"`
 }
 
-// AccessToken1Resp 用 UUID 换取 accesstoken 响应
+// AccessToken1Resp 用 UUID 换取 accesstoken 响应（代理格式）
 type AccessToken1Resp struct {
-	Code    int              `json:"code"`
-	Message string           `json:"message"`
-	Data    *AccessTokenData `json:"data"`
+Code    int              `json:"code"`
+Message string           `json:"message"`
+Data    *AccessTokenData `json:"data"`
 }
 
 // AccessTokenData accesstoken 数据
+// 注意：代理返回 accessToken（驼峰），非 accesstoken
 type AccessTokenData struct {
-	Accesstoken string `json:"accesstoken"`
+AccessToken string `json:"accessToken"`
+ExpiresIn   int    `json:"expiresIn"`
 }
 
 // RefreshTokenReq 刷新 token 请求
 type RefreshTokenReq struct {
-	AppId        string `json:"appId"`
-	AppSecret    string `json:"appSecret"`
-	RefreshToken string `json:"refreshToken"`
+AppId        string `json:"appId"`
+AppSecret    string `json:"appSecret"`
+RefreshToken string `json:"refreshToken"`
 }
 
-// RefreshTokenResp 刷新 token 响应
+// RefreshTokenResp 刷新 token 响应（代理格式）
 type RefreshTokenResp struct {
-	Code    int              `json:"code"`
-	Message string           `json:"message"`
-	Data    *AccessTokenData `json:"data"`
+Code    int              `json:"code"`
+Message string           `json:"message"`
+Data    *AccessTokenData `json:"data"`
 }
 
 // ==================== 用户信息 ====================
 
-// UserInfoResp 获取用户信息响应
 type UserInfoResp struct {
-	Code    int          `json:"code"`
-	Message string       `json:"message"`
-	Data    *UserInfoData `json:"data"`
+Code    int          `json:"code"`
+Message string       `json:"message"`
+Data    *UserInfoData `json:"data"`
 }
 
-// UserInfoData 用户信息数据
 type UserInfoData struct {
-	Phone     string `json:"phone"`     // AES 加密
-	NickName  string `json:"nickName"`  // AES 加密
-	AvatarURL string `json:"avatarUrl"`
+Phone     string `json:"phone"`
+NickName  string `json:"nickName"`
+AvatarURL string `json:"avatarUrl"`
 }
 
 // ==================== 磁盘信息 ====================
 
-// GetDiskInfoResult 获取磁盘信息结果
+// GetDiskInfoResp 获取磁盘信息响应（代理 XML→JSON 格式）
+type GetDiskInfoResp struct {
+GetDiskInfoResult *GetDiskInfoResult `json:"getDiskInfoResult"`
+ResultCode        string             `json:"resultCode"`
+}
+
 type GetDiskInfoResult struct {
-	ResultCode string `json:"resultCode"`
-	Message    string `json:"message"`
-	TotalSize  int64  `json:"totalSize"`
-	UsedSize   int64  `json:"usedSize"`
+DiskSize    string `json:"diskSize"`    // 单位:MB，字符串类型
+FreeDiskSize string `json:"freeDiskSize"` // 单位:MB，字符串类型
 }
 
 // ==================== 列目录 ====================
 
 // GetDiskReq 列目录请求
 type GetDiskReq struct {
-	CatalogID       string `json:"catalogID"`
-	FilterType      int    `json:"filterType"`      // 0=全部, 1=仅目录, 2=仅文件
-	CatalogSortType int    `json:"catalogSortType"` // 0=更新时间, 1=名称, 2=类型, 3=大小
-	ContentType     int    `json:"contentType"`     // 0=全部
-	ContentSortType int    `json:"contentSortType"` // 同 catalogSortType
-	SortDirection   int    `json:"sortDirection"`   // 0=正序, 1=倒序
-	StartNumber     int    `json:"startNumber"`     // 起始序号(从1开始)
-	EndNumber       int    `json:"endNumber"`       // 结束序号
-	CatalogType     int    `json:"catalogType"`     // -1=所有类型
+CatalogID       string `json:"catalogID"`
+FilterType      int    `json:"filterType"`
+CatalogSortType int    `json:"catalogSortType"`
+ContentType     int    `json:"contentType"`
+ContentSortType int    `json:"contentSortType"`
+SortDirection   int    `json:"sortDirection"`
+StartNumber     int    `json:"startNumber"`
+EndNumber       int    `json:"endNumber"`
+CatalogType     int    `json:"catalogType"`
 }
 
-// GetDiskResult 列目录结果
-type GetDiskResult struct {
-	ResultCode string        `json:"resultCode"`
-	Message    string        `json:"message"`
-	CatalogList []CatalogInfo `json:"catalogList"`
-	ContentList []ContentInfo `json:"contentList"`
-	NodeCount   int          `json:"nodeCount"` // 总节点数(用于分页)
+// GetDiskResp 列目录响应（代理 XML→JSON 格式）
+// 代理把 XML 响应转为 JSON 后，结构有包裹层
+type GetDiskResp struct {
+GetDiskResult *GetDiskResultInner `json:"getDiskResult"`
+ResultCode    string              `json:"resultCode"`
+}
+
+// GetDiskResultInner 内层结果
+type GetDiskResultInner struct {
+CatalogList    *CatalogListObj    `json:"catalogList"`
+ContentList    *ContentListObj    `json:"contentList"`
+NodeCount      string            `json:"nodeCount"` // 代理返回字符串
+ParentCatalogID string           `json:"parentCatalogID"`
+IsCompleted    string            `json:"isCompleted"`
+}
+
+// CatalogListObj 目录列表（代理 XML→JSON 把数组包在对象里）
+type CatalogListObj struct {
+CatalogInfo []CatalogInfo `json:"catalogInfo"`
+Length      string        `json:"length"`
+}
+
+// ContentListObj 文件列表（代理 XML→JSON 把数组包在对象里）
+type ContentListObj struct {
+ContentInfo []ContentInfo `json:"contentInfo"`
+Length      string        `json:"length"`
 }
 
 // CatalogInfo 目录信息
 type CatalogInfo struct {
-	CatalogID   string `json:"catalogID"`
-	CatalogName string `json:"catalogName"`
-	CatalogType int    `json:"catalogType"`
-	ParentCatalogID string `json:"parentCatalogID"`
-	CreateTime  string `json:"createTime"`
-	UpdateTime  string `json:"updateTime"`
-	NodeCount   int    `json:"nodeCount"`
+CatalogID       string `json:"catalogID"`
+CatalogName     string `json:"catalogName"`
+CatalogType     string `json:"catalogType"`     // 代理返回字符串
+ParentCatalogID string `json:"parentCatalogId"` // 注意小写d
+CreateTime      string `json:"createTime"`
+UpdateTime      string `json:"updateTime"`
+NodeCount       string `json:"nodeCount"`
+Path            string `json:"path"`
+Owner           string `json:"owner"`
 }
 
 // ContentInfo 文件内容信息
 type ContentInfo struct {
-	ContentID    string `json:"contentID"`
-	ContentName  string `json:"contentName"`
-	ContentType  int    `json:"contentType"`
-	ContentSize  int64  `json:"contentSize"`
-	ParentCatalogID string `json:"parentCatalogID"`
-	CreateTime   string `json:"createTime"`
-	UpdateTime   string `json:"updateTime"`
-	Digest       string `json:"digest"`
-	Url          string `json:"url"`
+ContentID       string `json:"contentID"`
+ContentName     string `json:"contentName"`
+ContentType     string `json:"contentType"`  // 代理返回字符串
+ContentSize     int64  `json:"contentSize"`  // 这个可能仍是数字
+ParentCatalogID string `json:"parentCatalogId"`
+CreateTime      string `json:"createTime"`
+UpdateTime      string `json:"updateTime"`
+Digest          string `json:"digest"`
+Url             string `json:"url"`
 }
 
 // ==================== 下载 ====================
 
-// DownloadReq 下载请求
 type DownloadReq struct {
-	ContentID string `json:"contentID"`
+ContentID string `json:"contentID"`
 }
 
-// DownloadResult 下载结果
-type DownloadResult struct {
-	ResultCode  string `json:"resultCode"`
-	Message     string `json:"message"`
-	DownloadURL string `json:"downloadURL"`
+// DownloadResp 下载响应（代理 XML→JSON 格式）
+type DownloadResp struct {
+DownloadResult *DownloadResultInner `json:"downloadResult"`
+ResultCode     string              `json:"resultCode"`
+}
+
+type DownloadResultInner struct {
+DownloadURL string `json:"downloadURL"`
 }
 
 // ==================== 上传 ====================
 
-// UploadReq 上传请求
 type UploadReq struct {
-	TotalSize        int64              `json:"totalSize"`
-	UploadContentList []UploadContentInfo `json:"uploadContentList"`
-	ParentCatalogID  string             `json:"parentCatalogID"`
-	Operation        int                `json:"operation"` // 0=普通上传
+TotalSize         int64              `json:"totalSize"`
+UploadContentList []UploadContentInfo `json:"uploadContentList"`
+ParentCatalogID   string             `json:"parentCatalogID"`
+Operation         int                `json:"operation"`
 }
 
-// UploadContentInfo 上传文件信息
 type UploadContentInfo struct {
-	ContentName string `json:"contentName"`
-	ContentSize int64  `json:"contentSize"`
-	Digest      string `json:"digest,omitempty"` // 可选 MD5
+ContentName string `json:"contentName"`
+ContentSize int64  `json:"contentSize"`
+Digest      string `json:"digest,omitempty"`
 }
 
-// UploadResult 上传结果
-type UploadResult struct {
-	ResultCode   string `json:"resultCode"`
-	Message      string `json:"message"`
-	UploadURL    string `json:"uploadURL"`
-	UploadTaskID string `json:"uploadTaskID"`
+// UploadResp 上传响应（代理 XML→JSON 格式）
+type UploadResp struct {
+UploadResult *UploadResultInner `json:"uploadResult"`
+ResultCode   string            `json:"resultCode"`
+}
+
+type UploadResultInner struct {
+UploadURL    string `json:"uploadURL"`
+UploadTaskID string `json:"uploadTaskID"`
 }
 
 // ==================== 创建目录 ====================
 
-// CreateCatalogReq 创建目录请求
 type CreateCatalogReq struct {
-	ParentCatalogID string `json:"parentCatalogID"`
-	CatalogName     string `json:"catalogName"`
-	CatalogType     int    `json:"catalogType"` // 0=普通目录
+ParentCatalogID string `json:"parentCatalogID"`
+CatalogName     string `json:"catalogName"`
+CatalogType     int    `json:"catalogType"`
 }
 
-// CreateCatalogResult 创建目录结果
-type CreateCatalogResult struct {
-	ResultCode string `json:"resultCode"`
-	Message    string `json:"message"`
-	CatalogID  string `json:"catalogID"`
+// CreateCatalogResp 创建目录响应（代理 XML→JSON 格式）
+type CreateCatalogResp struct {
+CreateCatalogResult *CreateCatalogResultInner `json:"createCatalogResult"`
+ResultCode          string                   `json:"resultCode"`
+}
+
+type CreateCatalogResultInner struct {
+CatalogID string `json:"catalogID"`
 }
 
 // ==================== 移动 ====================
 
-// MoveCatalogContentReq 移动内容请求
 type MoveCatalogContentReq struct {
-	SourceCatalogID string   `json:"sourceCatalogID,omitempty"`
-	DestCatalogID   string   `json:"destCatalogID"`
-	CatalogIDs      []string `json:"catalogIDs,omitempty"`  // 移动目录的ID列表
-	ContentIDs      []string `json:"contentIDs,omitempty"`  // 移动文件的ID列表
+SourceCatalogID string   `json:"sourceCatalogID,omitempty"`
+DestCatalogID   string   `json:"destCatalogID"`
+CatalogIDs      []string `json:"catalogIDs,omitempty"`
+ContentIDs      []string `json:"contentIDs,omitempty"`
+}
+
+// MoveResp 移动响应（代理 XML→JSON 格式）
+type MoveResp struct {
+ResultCode string `json:"resultCode"`
 }
 
 // ==================== 重命名/更新 ====================
 
-// UpdateContentInfoReq 更新文件信息请求（用于文件重命名）
 type UpdateContentInfoReq struct {
-	ContentID   string `json:"contentID"`
-	ContentName string `json:"contentName"`
+ContentID   string `json:"contentID"`
+ContentName string `json:"contentName"`
 }
 
-// UpdateCatalogInfoReq 更新目录信息请求（用于目录重命名，需 XML 格式）
 type UpdateCatalogInfoReq struct {
-	CatalogID   string `json:"catalogID"`
-	CatalogName string `json:"catalogName"`
+CatalogID   string `json:"catalogID"`
+CatalogName string `json:"catalogName"`
 }
 
 // ==================== 删除 ====================
 
-// DelCatalogContentReq 删除内容请求
 type DelCatalogContentReq struct {
-	CatalogIDs []string `json:"catalogIDs,omitempty"`  // 删除目录的ID列表
-	ContentIDs []string `json:"contentIDs,omitempty"`  // 删除文件的ID列表
-	OprReason  int      `json:"oprReason"`             // 0=普通删除
+CatalogIDs []string `json:"catalogIDs,omitempty"`
+ContentIDs []string `json:"contentIDs,omitempty"`
+OprReason  int      `json:"oprReason"`
 }
 
-// ==================== 时间解析辅助（供 types 内部使用） ====================
+// DelResp 删除响应（代理 XML→JSON 格式）
+type DelResp struct {
+ResultCode string `json:"resultCode"`
+}
 
-// _ 确保时间包被导入
+// ==================== 时间解析辅助 ====================
 var _ time.Time
