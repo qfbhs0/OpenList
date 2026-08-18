@@ -1,0 +1,47 @@
+name: Build OpenList with CmccCloud
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'drivers/cmcc_cloud/**'
+      - '.github/workflows/build-cmcc-cloud.yml'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: arm64
+          - goos: linux
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: 0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o openlist-${{ matrix.goos }}-${{ matrix.goarch }} .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openlist-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: openlist-${{ matrix.goos }}-${{ matrix.goarch }}
+          retention-days: 30
